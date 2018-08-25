@@ -12,7 +12,7 @@ defmodule Fawkes.Schedule.Talk do
     belongs_to :location, Fawkes.Schedule.Location
     belongs_to :slot, Fawkes.Schedule.Slot
     has_many :speakers, Fawkes.Schedule.Speaker
-    
+
     timestamps()
   end
 

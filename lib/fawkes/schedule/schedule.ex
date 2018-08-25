@@ -1,6 +1,9 @@
 defmodule Fawkes.Schedule do
   alias Fawkes.Repo
   alias Fawkes.Schedule.Category
+  alias Fawkes.Schedule.Audience
+  alias Fawkes.Schedule.Talk
+  import Ecto.Query
 
   def all_category do
     Repo.all(Category)
@@ -15,9 +18,6 @@ defmodule Fawkes.Schedule do
     |> Category.changeset(attrs)
     |> Repo.insert()
   end
-
-
-  alias Fawkes.Schedule.Audience
 
   @doc """
   Returns the list of audiences.
@@ -125,7 +125,11 @@ defmodule Fawkes.Schedule do
 
   """
   def list_schedule_slots do
-    Repo.all(Slot)
+    Slot
+    |> preload([:event, talks: [:slot, :speakers, :categories, :audience, :location]])
+    |> order_by(asc: :start_time)
+    |> Repo.all()
+    |> Enum.group_by(&(Timex.beginning_of_day(&1.start_time)))
   end
 
   @doc """
@@ -221,7 +225,9 @@ defmodule Fawkes.Schedule do
 
   """
   def list_speakers do
-    Repo.all(Speaker)
+    Speaker
+    |> preload([talk: [:slot, :speakers, :categories, :audience, :location]])
+    |> Repo.all()
   end
 
   @doc """
@@ -238,7 +244,17 @@ defmodule Fawkes.Schedule do
       ** (Ecto.NoResultsError)
 
   """
-  def get_speaker!(id), do: Repo.get!(Speaker, id)
+  def get_speaker!(id) do
+    Speaker
+    |> preload([talk: [:slot, :speakers, :categories, :audience, :location]])
+    |> Repo.get(id)
+  end
+
+  def get_talk!(id) do
+    Talk
+    |> preload([:slot, :speakers, :categories, :audience, :location])
+    |> Repo.get(id)
+  end
 
   @doc """
   Creates a speaker.
